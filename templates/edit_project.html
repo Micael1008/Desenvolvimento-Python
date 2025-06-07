@@ -1,0 +1,104 @@
+<!-- templates/edit_project.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreelaHub - Editar Projeto</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        .form-container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            margin: 50px auto;
+            text-align: center;
+        }
+        .form-container h2 {
+            color: #0073e6;
+            margin-bottom: 30px;
+        }
+        .project-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: left;
+        }
+        .project-form label {
+            font-weight: 600;
+            color: #555;
+        }
+        .project-form input[type="text"],
+        .project-form textarea,
+        .project-form select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            width: calc(100% - 24px);
+        }
+        .project-form button {
+            background-color: #ffcc00;
+            color: #333;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        .project-form button:hover {
+            background-color: #e6b800;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>FreelaHub</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Início</a></li>
+                    <li><a href="{{ url_for('profile') }}">Perfil</a></li>
+                    <li><a href="{{ url_for('list_projects') }}">Projetos</a></li>
+                    <li><a href="{{ url_for('logout') }}">Sair</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="form-container">
+            <h2>Editar Projeto: {{ project.title }}</h2>
+            <form class="project-form" action="{{ url_for('edit_project', project_id=project.id) }}" method="POST">
+                <label for="title">Título do Projeto:</label>
+                <input type="text" id="title" name="title" value="{{ project.title }}" required>
+
+                <label for="description">Descrição do Projeto:</label>
+                <textarea id="description" name="description" rows="8" required>{{ project.description }}</textarea>
+
+                <label for="status">Status:</label>
+                <select id="status" name="status">
+                    <option value="Aberto" {% if project.status == 'Aberto' %}selected{% endif %}>Aberto</option>
+                    <option value="Em Andamento" {% if project.status == 'Em Andamento' %}selected{% endif %}>Em Andamento</option>
+                    <option value="Concluído" {% if project.status == 'Concluído' %}selected{% endif %}>Concluído</option>
+                    <option value="Cancelado" {% if project.status == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                </select>
+
+                <button type="submit">Salvar Alterações</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 FreelaHub - Todos os direitos reservados.</p>
+        </div>
+    </footer>
+</body>
+</html>

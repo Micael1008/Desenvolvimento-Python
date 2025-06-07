@@ -1,0 +1,184 @@
+<!-- templates/profile.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreelaHub - Meu Perfil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        .profile-container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            margin: 50px auto;
+            text-align: center;
+        }
+        .profile-container h2 {
+            color: #0073e6;
+            margin-bottom: 30px;
+        }
+        .profile-info {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+        .profile-info p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        .profile-info strong {
+            color: #333;
+        }
+        .profile-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: left;
+        }
+        .profile-form label {
+            font-weight: 600;
+            color: #555;
+        }
+        .profile-form input[type="text"],
+        .profile-form input[type="tel"],
+        .profile-form input[type="file"] {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            width: calc(100% - 24px);
+        }
+        .profile-form button {
+            background-color: #0073e6;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        .profile-form button:hover {
+            background-color: #005bb5;
+        }
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 3px solid #0073e6;
+        }
+        .flash-messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .flash-messages li {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .flash-messages .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-messages .danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>FreelaHub</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Início</a></li>
+                    <li><a href="#sobre">Sobre</a></li>
+                    <li><a href="#servicos">Serviços</a></li>
+                    <li><a href="#planos">Planos</a></li>
+                    <li><a href="#contato">Contato</a></li>
+                    <li><a href="{{ url_for('profile') }}">Perfil</a></li>
+                    <li><a href="{{ url_for('logout') }}">Sair</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="profile-container">
+            <!-- Mensagens Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flash-messages">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
+            <h2>Meu Perfil</h2>
+            {% if profile.foto %}
+                <img src="{{ url_for('static', filename='img/profile_pics/' + profile.foto) }}" alt="Foto de Perfil" class="profile-image">
+            {% else %}
+                <img src="{{ url_for('static', filename='img/profile_pics/default.jpg') }}" alt="Foto de Perfil Padrão" class="profile-image">
+            {% endif %}
+
+            <div class="profile-info">
+                <p><strong>E-mail:</strong> {{ user.email }}</p>
+                <p><strong>Tipo de Usuário:</strong> {{ 'Administrador' if user.tipoUsuario else 'Freelancer/Cliente' }}</p>
+                <p><strong>Status da Conta:</strong> {{ 'Ativo' if user.liberacao else 'Inativo' }}</p>
+                {% if user.mudaSenha %}
+                    <p style="color: red; font-weight: bold;">Você precisa alterar sua senha no próximo login!</p>
+                {% endif %}
+            </div>
+
+            <h3>Editar Informações do Perfil</h3>
+            <form class="profile-form" action="{{ url_for('profile') }}" method="POST" enctype="multipart/form-data">
+                <label for="nome">Nome Completo:</label>
+                <input type="text" id="nome" name="nome" value="{{ profile.nome if profile.nome else '' }}" placeholder="Seu nome completo">
+
+                <label for="contato">Contato (DDD + Telefone):</label>
+                <input type="tel" id="contato" name="contato" value="{{ profile.contato if profile.contato else '' }}" pattern="[0-9]{11}" placeholder="Ex: 11987654321">
+                <small>Formato: 11 dígitos (DDD + número)</small>
+
+                <label for="foto">Foto de Perfil:</label>
+                <input type="file" id="foto" name="foto" accept="image/*">
+                <small>Ainda não implementado: Upload de arquivo</small>
+
+                <button type="submit">Salvar Alterações</button>
+            </form>
+
+            <h3 style="margin-top: 40px;">Alterar Senha</h3>
+            <form class="profile-form" action="{{ url_for('change_password_on_login') }}" method="POST">
+                <label for="new_password">Nova Senha:</label>
+                <input type="password" id="new_password" name="new_password" required placeholder="Nova senha">
+                <label for="confirm_new_password">Confirmar Nova Senha:</label>
+                <input type="password" id="confirm_new_password" name="confirm_new_password" required placeholder="Confirmar nova senha">
+                <button type="submit">Alterar Senha</button>
+            </form>
+
+            <h3 style="margin-top: 40px;">Meus Projetos</h3>
+            <p><a href="{{ url_for('list_projects') }}" class="btn">Ver Meus Projetos</a></p>
+
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 FreelaHub - Todos os direitos reservados.</p>
+        </div>
+    </footer>
+</body>
+</html>
