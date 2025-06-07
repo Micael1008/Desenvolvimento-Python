@@ -1,0 +1,464 @@
+/* static/css/styles.css */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.container {
+    width: 90%; /* Aumentado para melhor responsividade */
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: 0 15px; /* Adicionado padding para evitar que o conteúdo cole nas bordas */
+}
+
+header {
+    background-color: #0073e6;
+    padding: 15px 0;
+    color: white;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Permite quebrar linha em telas menores */
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8em;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap; /* Permite quebrar linha em telas menores */
+    margin: 0; /* Remove margem padrão */
+}
+
+nav ul li {
+    margin: 5px 15px; /* Ajustado para melhor espaçamento em telas menores */
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600; /* Mais negrito */
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+nav ul li a:hover,
+nav ul li a.btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.hero {
+    background-color: #005bb5;
+    color: white;
+    text-align: center;
+    padding: 80px 20px; /* Mais padding para destaque */
+    background-image: linear-gradient(45deg, #005bb5, #0073e6); /* Gradiente suave */
+}
+
+.hero h2 {
+    margin: 0;
+    font-size: 2.8em; /* Tamanho maior */
+    line-height: 1.2;
+    margin-bottom: 20px;
+}
+
+.hero p {
+    font-size: 1.2em;
+    max-width: 700px;
+    margin: 0 auto 30px auto;
+}
+
+.hero .btn {
+    display: inline-block;
+    background-color: #ffcc00;
+    color: #333;
+    padding: 12px 25px; /* Mais padding */
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 8px; /* Mais arredondado */
+    margin-top: 20px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.hero .btn:hover {
+    background-color: #e6b800;
+    transform: translateY(-2px); /* Efeito de elevação */
+}
+
+main section {
+    padding: 60px 0; /* Padding consistente para seções */
+    text-align: center;
+}
+
+main section:nth-child(odd) {
+    background-color: #f9f9f9; /* Fundo leve para seções alternadas */
+}
+
+h2 {
+    font-size: 2.2em;
+    color: #0073e6;
+    margin-bottom: 40px;
+    position: relative;
+    display: inline-block; /* Para centralizar o pseudo-elemento */
+}
+
+h2::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background-color: #ffcc00;
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+.cards, .plans {
+    display: flex;
+    justify-content: center; /* Centraliza os itens */
+    flex-wrap: wrap; /* Permite quebrar linha */
+    margin-top: 20px;
+    gap: 20px; /* Espaçamento entre os cards/planos */
+}
+
+.card, .plan {
+    background: white;
+    padding: 30px;
+    border-radius: 12px; /* Mais arredondado */
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    min-width: 280px; /* Largura mínima para evitar que fiquem muito pequenos */
+    max-width: 350px; /* Largura máxima */
+    margin: 10px; /* Mantém alguma margem externa */
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover, .plan:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.card h3, .plan h3 {
+    color: #0073e6;
+    font-size: 1.5em;
+    margin-bottom: 15px;
+}
+
+.destaque {
+    background-color: #ffcc00;
+    color: #333; /* Ajuste a cor do texto para contraste */
+    border: 3px solid #0073e6; /* Borda para destaque */
+}
+
+.destaque h3 {
+    color: #005bb5; /* Cor para o título do plano em destaque */
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    max-width: 700px; /* Aumentado para formulários maiores */
+    margin: 0 auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+form label {
+    margin-top: 15px;
+    font-weight: 600;
+    color: #555;
+    text-align: left; /* Alinha labels à esquerda */
+}
+
+form input, form textarea, form select {
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    width: calc(100% - 24px); /* Ajusta para o padding */
+    font-size: 1em;
+    box-sizing: border-box; /* Inclui padding e borda no tamanho total */
+}
+
+form textarea {
+    resize: vertical; /* Permite redimensionar verticalmente */
+    min-height: 100px;
+}
+
+form button {
+    margin-top: 25px;
+    padding: 12px 20px;
+    background-color: #0073e6;
+    color: white;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+form button:hover {
+    background-color: #005bb5;
+    transform: translateY(-2px);
+}
+
+footer {
+    background-color: #222;
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 50px; /* Mais margem superior */
+}
+
+/* --- Estilos do Carrossel --- */
+.custom-carousel {
+    position: relative;
+    width: 100%; /* Ajustado para ser responsivo */
+    max-width: 800px; /* Largura máxima */
+    height: 400px; /* Altura fixa ou ajustável com JS */
+    margin: 40px auto; /* Mais margem */
+    overflow: hidden;
+    border-radius: 15px; /* Mais arredondado */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); /* Sombra mais pronunciada */
+}
+
+.carousel-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.carousel-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out; /* Transição mais suave */
+    z-index: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.carousel-slide.active {
+    opacity: 1;
+    z-index: 1;
+}
+
+.carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Garante que a imagem cubra o slide */
+}
+
+.caption {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.6); /* Fundo mais escuro para melhor contraste */
+    padding: 15px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    font-size: 1.1em;
+}
+
+.caption h5 {
+    margin: 0 0 5px 0;
+    font-size: 1.4em;
+}
+
+.caption p {
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.prev,
+.next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0,0,0,0.4); /* Levemente mais transparente */
+    border: none;
+    color: white;
+    font-size: 35px; /* Maior */
+    padding: 10px 15px; /* Mais padding */
+    cursor: pointer;
+    z-index: 2;
+    border-radius: 50%; /* Botões redondos */
+    transition: background-color 0.3s ease;
+}
+
+.prev:hover,
+.next:hover {
+    background-color: rgba(0,0,0,0.7);
+}
+
+.prev {
+    left: 15px;
+}
+
+.next {
+    right: 15px;
+}
+
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px; /* Mais espaçamento */
+    gap: 12px; /* Mais espaçamento entre os pontos */
+}
+
+.dot {
+    height: 14px; /* Maior */
+    width: 14px; /* Maior */
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border: 2px solid transparent; /* Borda para destaque no ativo */
+}
+
+.dot.active {
+    background-color: #0073e6; /* Cor do tema */
+    border-color: #ffcc00; /* Borda de destaque */
+    transform: scale(1.2); /* Aumenta um pouco */
+}
+
+.dot:hover {
+    background-color: #888;
+}
+
+/* --- Mensagens Flash (Adicionado) --- */
+.flash-messages {
+    list-style: none;
+    padding: 0;
+    margin: 20px auto;
+    max-width: 700px;
+    text-align: center;
+}
+.flash-messages li {
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.flash-messages .success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.flash-messages .danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+.flash-messages .info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+.flash-messages .warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+/* --- Responsividade --- */
+@media (max-width: 768px) {
+    header .container {
+        flex-direction: column;
+        text-align: center;
+    }
+    nav ul {
+        flex-direction: column;
+        margin-top: 15px;
+    }
+    nav ul li {
+        margin: 5px 0;
+    }
+    .hero h2 {
+        font-size: 2em;
+    }
+    .hero p {
+        font-size: 1em;
+    }
+    .cards, .plans {
+        flex-direction: column;
+        align-items: center;
+    }
+    .card, .plan {
+        margin: 10px 0;
+        width: 90%; /* Ocupa mais largura em telas menores */
+        max-width: 400px;
+    }
+    .custom-carousel {
+        height: 300px; /* Altura menor para telas pequenas */
+    }
+    .prev, .next {
+        font-size: 25px;
+        padding: 5px 10px;
+    }
+    form {
+        padding: 20px;
+    }
+    .project-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .project-item h3, .project-item .status, .project-item p, .project-actions {
+        flex-basis: 100%;
+        text-align: left;
+    }
+    .project-actions {
+        margin-top: 10px;
+    }
+    .project-actions a, .project-actions button {
+        margin-left: 0;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero h2 {
+        font-size: 1.8em;
+    }
+    .hero p {
+        font-size: 0.9em;
+    }
+    .custom-carousel {
+        height: 200px;
+    }
+    .caption h5 {
+        font-size: 1.2em;
+    }
+    .caption p {
+        font-size: 0.8em;
+    }
+}
