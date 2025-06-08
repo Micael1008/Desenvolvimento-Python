@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestor de Projetos - Projeto RAD</title>
     
-    <!-- Chosen Palette: Slate Gray and Indigo -->
-    <!-- Application Structure Plan: A single-page application (SPA) with four distinct views managed by JavaScript: Landing, Login, Signup, and a user Dashboard. This task-oriented structure directly addresses the project requirements, providing a clear and intuitive user flow. The Dashboard acts as the "aplicação principal," featuring profile management and a full CRUD module for "projects" to fulfill the core assignment. This is more user-friendly than separate pages as it provides a faster, seamless experience. -->
-    <!-- Visualization & Content Choices: 
-        - Landing Page (Inform): Hero section with CTA buttons (HTML/CSS) to guide new/returning users. Justification: Clear starting point.
-        - Auth Forms (Organize): Standard HTML forms enhanced with icons for better UX. Justification: Familiar and effective for data entry.
-        - User Profile (Inform/Update): Displays user data from the JS state object, with a button to enable editing. Justification: Fulfills the "perfil do usuário" requirement.
-        - Project List (CRUD): An interactive table/list to display, add, edit, and delete projects. A modal form is used for creation/editing. Justification: Directly implements the required CRUD functionality in a clean, user-friendly manner.
-        - Project Status Chart (Compare): A dynamic Donut chart from Chart.js (Canvas) to visualize the proportion of projects by status. Justification: Adds a professional, data-driven element to the dashboard, making it "superior" as requested.
-        - Library/Method: Vanilla JS for state management and DOM manipulation; Chart.js for data visualization. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- Paleta de Cores Escolhida: Cinza Ardósia e Índigo -->
+    <!-- Plano da Estrutura da Aplicação: Uma aplicação de página única (SPA) com quatro vistas distintas geridas por JavaScript: Aterragem, Login, Cadastro e um Painel de controlo do utilizador. Esta estrutura orientada para tarefas aborda diretamente os requisitos do projeto, fornecendo um fluxo de utilizador claro e intuitivo. O Painel de controlo atua como a "aplicação principal", com gestão de perfil e um módulo CRUD completo para "projetos" para cumprir a tarefa principal. Isto é mais amigável do que páginas separadas, pois proporciona uma experiência mais rápida e contínua. -->
+    <!-- Escolhas de Visualização e Conteúdo: 
+        - Página de Aterragem (Informar): Secção principal com botões de chamada para ação (HTML/CSS) para guiar utilizadores novos/recorrentes. Justificação: Ponto de partida claro.
+        - Formulários de Autenticação (Organizar): Formulários HTML padrão melhorados com ícones para melhor UX. Justificação: Familiar e eficaz para a entrada de dados.
+        - Perfil do Utilizador (Informar/Atualizar): Exibe os dados do utilizador do objeto de estado JS, com um botão para ativar a edição. Justificação: Cumpre o requisito de "perfil do usuário".
+        - Lista de Projetos (CRUD): Uma tabela/lista interativa para exibir, adicionar, editar e apagar projetos. Um formulário modal é usado para criação/edição. Justificação: Implementa diretamente a funcionalidade CRUD necessária de uma forma limpa e amigável.
+        - Gráfico de Estado do Projeto (Comparar): Um gráfico Donut dinâmico do Chart.js (Canvas) para visualizar a proporção de projetos por estado. Justificação: Adiciona um elemento profissional, orientado por dados, ao painel de controlo, tornando-o "superior" como solicitado.
+        - Biblioteca/Método: JS Baunilha para gestão de estado e manipulação do DOM; Chart.js para visualização de dados. -->
+    <!-- CONFIRMAÇÃO: NÃO foram utilizados gráficos SVG. NÃO foi utilizado Mermaid JS. -->
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -488,5 +488,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
-
-
