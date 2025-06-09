@@ -1,0 +1,27 @@
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+Python*/
+.env
+.venv
+venv/
+env/
+*/bin/
+*/include/
+*/lib/
+*/lib64/
+
+# Flask
+instance/
+*.db 
+.flaskenv
+
+
+.DS_Store
+.ipynb_checkpoints
+
+# VSCode specific
+.vscode/

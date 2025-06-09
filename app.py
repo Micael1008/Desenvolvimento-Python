@@ -1,417 +1,465 @@
 # app.py
-# Arquivo principal da aplicação FreelaHub
+# Backend REST API para o Gestor de Projetos (SPA Frontend)
 
-# Importa as classes e funções necessárias do Flask
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, request, jsonify, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import os
-
-# Inicializa a aplicação Flask
-app = Flask(__name__)
+import secrets
+from datetime import datetime, timedelta
+import re # Importar módulo de expressões regulares para validação de email e contato
 
 # Configurações do Flask
-# Chave secreta para segurança das sessões (MUITO IMPORTANTE!)
-# Em produção, use uma variável de ambiente: os.environ.get('SECRET_KEY')
-app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_segura_e_longa_aqui_para_producao'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db' # Configura o banco de dados SQLite
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Desativa o rastreamento de modificações (melhora performance)
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_segura_e_longa_aqui' # Mude isso em produção!
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gestorprojetos.db' # Nome do banco de dados alterado
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Inicializa o SQLAlchemy para interagir com o banco de dados
 db = SQLAlchemy(app)
 
-# Configura o Flask-Login para gerenciar sessões de usuário
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login' # Define a rota para onde o usuário será redirecionado se não estiver logado
+login_manager.login_view = 'index' # Redireciona para a página inicial da SPA se não logado para API
 
 # --- Modelos do Banco de Dados ---
-# Definindo os modelos (tabelas) do banco de dados com SQLAlchemy
-# Eles herdam de db.Model
-
 class User(db.Model, UserMixin):
-    """
-    Modelo para a tabela USUÁRIOS.
-    Representa os usuários da plataforma (freelancers ou admins).
-    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    tipoUsuario = db.Column(db.Boolean, default=False) # False=user (freelancer), True=admin
+    # email varchar(50)
     email = db.Column(db.String(50), unique=True, nullable=False)
-    senha = db.Column(db.String(255), nullable=False) # Aumentado para armazenar hash de senha
-    mudaSenha = db.Column(db.Boolean, default=False) # False=não mudar, True=mudar no próximo login
-    liberacao = db.Column(db.Boolean, default=True) # False=inativo, True=ativo
+    # senha varchar(30) (usaremos varchar(255) para o hash)
+    senha = db.Column(db.String(255), nullable=False)
+    # tipoUsuario booleano user 0 / 1 admin
+    tipoUsuario = db.Column(db.Boolean, default=False) # False=user, True=admin
+    # mudaSenha booleano nao mudar 0 / 1 mudar
+    mudaSenha = db.Column(db.Boolean, default=False)
+    # liberacao booleano inativo 0 / 1 ativo
+    liberacao = db.Column(db.Boolean, default=True)
 
-    # Relacionamento com a tabela PERFIL (um usuário tem um perfil)
+    reset_token = db.Column(db.String(100), unique=True, nullable=True)
+    reset_expiration = db.Column(db.DateTime, nullable=True)
+
     profile = db.relationship('Profile', backref='user', uselist=False)
+    projects = db.relationship('Project', backref='owner', lazy=True) # Renomeado 'author' para 'owner' para consistência
 
     def __repr__(self):
-        return f"User('{self.email}', Tipo: {self.tipoUsuario}, Ativo: {self.liberacao})"
+        return f"<User {self.email}>"
 
 class Profile(db.Model):
-    """
-    Modelo para a tabela PERFIL.
-    Armazena informações adicionais do perfil do usuário.
-    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     userID = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    nome = db.Column(db.String(50), nullable=True) # Nome completo
-    contato = db.Column(db.String(11), nullable=True) # Telefone/WhatsApp (DDD + 9 dígitos)
-    foto = db.Column(db.String(255), nullable=True, default='default.jpg') # Caminho para imagem (ex: 'static/img/profile_pics/default.jpg')
+    # nome varchar(50) nome completo
+    nome = db.Column(db.String(50), nullable=True)
+    # contato varchar(11) Area 2 digitos, telefone 9 digitos
+    contato = db.Column(db.String(11), nullable=True) # <-- Coluna definida como 'contato'
+    # foto varchar() caminho para imagem salva no dispositivo (usaremos o nome do arquivo)
+    foto = db.Column(db.String(255), nullable=True, default='default.jpg')
 
     def __repr__(self):
-        return f"Profile('{self.nome}', Contato: {self.contato})"
+        return f"<Profile {self.nome}>"
 
 class Project(db.Model):
-    """
-    Modelo de exemplo para a tabela PROJETOS.
-    Será usado para o CRUD principal da aplicação.
-    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    title = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), default='Aberto') # Ex: 'Aberto', 'Em Andamento', 'Concluído'
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-
-    # Relacionamento com o usuário que criou o projeto
-    user = db.relationship('User', backref='projects', lazy=True)
+    name = db.Column(db.String(100), nullable=False) # Renomeado 'title' para 'name' para consistência com o frontend JS
+    description = db.Column(db.Text, nullable=True) # Alterado para True para permitir vazio
+    status = db.Column(db.String(20), default='A Fazer', nullable=False) # Status padrão 'A Fazer'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow) # Ajustado para datetime.utcnow
 
     def __repr__(self):
-        return f"Project('{self.title}', '{self.status}')"
-
+        return f"<Project {self.name}>"
 
 # --- Funções do Flask-Login ---
 @login_manager.user_loader
 def load_user(user_id):
-    """
-    Função para recarregar o objeto User do ID do usuário armazenado na sessão.
-    Necessário para o Flask-Login.
-    """
     return User.query.get(int(user_id))
 
-# --- Rotas da Aplicação ---
+# --- Rotas da API ---
 
+# Rota para servir o ficheiro HTML principal da SPA
 @app.route('/')
-def home():
-    """
-    Rota para a página inicial (index.html).
-    """
-    return render_template('index.html')
+def index():
+    return app.send_static_file('index.html') # Serve o ficheiro index.html da pasta 'static'
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """
-    Rota para a página de login.
-    Lida com a exibição do formulário GET e o processamento do POST.
-    """
-    # Se o usuário já estiver logado, redireciona para a página de perfil ou dashboard
+# Endpoint de Login
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    # Validação de entrada: E-mail e senha não podem ser vazios, e formato de e-mail válido
+    if not email or not password:
+        return jsonify({'message': 'E-mail e senha são obrigatórios.'}), 400
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return jsonify({'message': 'Formato de e-mail inválido.'}), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    # Validação de credenciais: Utilizador existe e senha está correta
+    if not user or not check_password_hash(user.senha, password):
+        return jsonify({'message': 'Credenciais inválidas. Verifique seu e-mail e senha.'}), 401
+    
+    # Validação de estado da conta: Utilizador ativo
+    if not user.liberacao:
+        return jsonify({'message': 'Sua conta está inativa. Entre em contato com o suporte.'}), 403
+
+    login_user(user) # Faz o login do utilizador via Flask-Login
+    
+    # Obter o nome do utilizador do perfil, com um fallback seguro
+    user_name = user.profile.nome if user.profile and user.profile.nome else user.email.split('@')[0] if user.email else 'Utilizador'
+
+    # Se a senha precisa ser alterada, o frontend será notificado
+    if user.mudaSenha:
+        return jsonify({
+            'message': 'Login bem-sucedido. Sua senha precisa ser alterada.',
+            'user': {'id': user.id, 'email': user.email, 'nome': user_name},
+            'requiresPasswordChange': True
+        }), 200
+
+    return jsonify({
+        'message': 'Login bem-sucedido',
+        'user': {'id': user.id, 'email': user.email, 'nome': user_name}, # Retorna dados básicos do utilizador
+        'isAuthenticated': True
+    }), 200
+
+# Endpoint de Registro
+@app.route('/api/signup', methods=['POST'])
+def api_signup():
+    data = request.get_json()
+    name = data.get('name')
+    email = data.get('email')
+    password = data.get('password')
+
+    # Validação de entrada para o registo
+    if not name or len(name.strip()) < 2:
+        return jsonify({'message': 'Nome completo é obrigatório e deve ter no mínimo 2 caracteres.'}), 400
+    if not email:
+        return jsonify({'message': 'E-mail é obrigatório.'}), 400
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return jsonify({'message': 'Formato de e-mail inválido.'}), 400
+    if not password or len(password) < 6:
+        return jsonify({'message': 'A senha é obrigatória e deve ter no mínimo 6 caracteres.'}), 400
+    # Validação de complexidade de senha (exemplo, pode ser expandido com mais regras)
+    # if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$", password):
+    #     return jsonify({'message': 'Senha deve ter no mínimo 6 caracteres, com letra maiúscula, minúscula, número e caractere especial.'}), 400
+
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({'message': 'Este e-mail já está registrado'}), 409 # Conflict
+
+    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+
+    new_user = User(email=email, senha=hashed_password, tipoUsuario=False, mudaSenha=False, liberacao=True)
+    db.session.add(new_user)
+    db.session.commit()
+
+    new_profile = Profile(userID=new_user.id, nome=name, contato=None)
+    db.session.add(new_profile)
+    db.session.commit()
+
+    login_user(new_user) # Opcional: logar o utilizador automaticamente após o registo
+
+    return jsonify({
+        'message': 'Conta criada com sucesso!',
+        'user': {'id': new_user.id, 'email': new_user.email, 'nome': new_profile.nome},
+        'isAuthenticated': True
+    }), 201 # Created
+
+# Endpoint para verificar o estado de autenticação (usado na inicialização do SPA)
+@app.route('/api/auth_status', methods=['GET'])
+def api_auth_status():
     if current_user.is_authenticated:
-        return redirect(url_for('profile')) # Ou 'dashboard'
+        user_profile = Profile.query.filter_by(userID=current_user.id).first()
+        # Fallback seguro para user_profile.nome e contato
+        profile_nome = user_profile.nome if user_profile and user_profile.nome else current_user.email.split('@')[0] if current_user.email else 'Utilizador'
+        profile_contato = user_profile.contato if user_profile and user_profile.contato else None
+        profile_foto = user_profile.foto if user_profile and user_profile.foto else 'default.jpg'
 
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        remember = True if request.form.get('remember') else False # "Lembrar-me"
+        return jsonify({
+            'isAuthenticated': True,
+            'user': {
+                'id': current_user.id,
+                'email': current_user.email,
+                'nome': profile_nome,
+                'contato': profile_contato,
+                'foto': profile_foto,
+                'tipoUsuario': current_user.tipoUsuario,
+                'mudaSenha': current_user.mudaSenha
+            }
+        }), 200
+    return jsonify({'isAuthenticated': False}), 200
 
-        user = User.query.filter_by(email=email).first()
-
-        # Verifica se o usuário existe e se a senha está correta
-        if not user or not check_password_hash(user.senha, password):
-            flash('Por favor, verifique seu e-mail ou senha e tente novamente.', 'danger')
-            return redirect(url_for('login'))
-
-        # Verifica se o usuário está ativo
-        if not user.liberacao:
-            flash('Sua conta está inativa. Entre em contato com o suporte.', 'warning')
-            return redirect(url_for('login'))
-
-        # Loga o usuário
-        login_user(user, remember=remember)
-        flash('Login realizado com sucesso!', 'success')
-
-        # Se o usuário precisa mudar a senha, redireciona para a página de mudança de senha
-        if user.mudaSenha:
-            return redirect(url_for('change_password_on_login'))
-
-        # Redireciona para a página de perfil após o login
-        return redirect(url_for('profile')) # Ou para a próxima URL se houver (next_page = request.args.get('next'))
-
-    return render_template('paginaLogin.html') # Exibe o formulário de login/cadastro
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    """
-    Rota para a página de registro de novos usuários.
-    """
-    if current_user.is_authenticated:
-        return redirect(url_for('profile'))
-
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        user_type = request.form.get('user_type') # 'freelancer' ou 'admin' (se houver checkbox/radio)
-
-        # Validações básicas
-        if password != confirm_password:
-            flash('As senhas não coincidem.', 'danger')
-            return redirect(url_for('register'))
-
-        if len(password) < 6: # Exemplo de validação de senha
-            flash('A senha deve ter pelo menos 6 caracteres.', 'danger')
-            return redirect(url_for('register'))
-
-        # Verifica se o e-mail já existe
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            flash('Este e-mail já está cadastrado.', 'danger')
-            return redirect(url_for('register'))
-
-        # Hash da senha antes de salvar
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-
-        # Define tipo de usuário (exemplo: se houver um campo no form para isso)
-        is_admin = True if user_type == 'admin' else False
-
-        new_user = User(
-            email=email,
-            senha=hashed_password,
-            tipoUsuario=is_admin,
-            mudaSenha=False, # Por padrão, não precisa mudar a senha no primeiro login
-            liberacao=True # Por padrão, usuário ativo
-        )
-        db.session.add(new_user)
-        db.session.commit()
-
-        # Cria um perfil vazio para o novo usuário
-        new_profile = Profile(userID=new_user.id)
-        db.session.add(new_profile)
-        db.session.commit()
-
-        flash('Sua conta foi criada com sucesso! Faça login para continuar.', 'success')
-        return redirect(url_for('login'))
-
-    return render_template('paginaLogin.html') # Pode ser um template separado para registro se preferir
-
-@app.route('/logout')
-@login_required # Garante que apenas usuários logados podem acessar esta rota
-def logout():
-    """
-    Rota para realizar o logout do usuário.
-    """
-    logout_user()
-    flash('Você foi desconectado(a).', 'info')
-    return redirect(url_for('home'))
-
-@app.route('/profile', methods=['GET', 'POST'])
+# Endpoint de Logout
+@app.route('/api/logout', methods=['POST'])
 @login_required
-def profile():
-    """
-    Rota para o perfil do usuário.
-    Permite visualizar e editar informações do perfil.
-    """
+def api_logout():
+    logout_user()
+    return jsonify({'message': 'Logout bem-sucedido'}), 200
+
+# Endpoint para Perfil do Utilizador (GET e PUT para atualização)
+@app.route('/api/profile', methods=['GET', 'PUT'])
+@login_required
+def api_profile():
     user_profile = Profile.query.filter_by(userID=current_user.id).first()
     if not user_profile:
-        # Se por algum motivo o perfil não existir, cria um
+        # Se o perfil não existir, cria um vazio para evitar erros
         user_profile = Profile(userID=current_user.id)
         db.session.add(user_profile)
         db.session.commit()
 
-    if request.method == 'POST':
-        user_profile.nome = request.form.get('nome')
-        user_profile.contato = request.form.get('contato')
-        # Lógica para upload de foto virá depois, é mais complexa
-        # Por enquanto, apenas atualiza nome e contato
+    if request.method == 'GET':
+        return jsonify({
+            'id': user_profile.id,
+            'userID': user_profile.userID,
+            'nome': user_profile.nome,
+            'contato': user_profile.contato,
+            'foto': user_profile.foto,
+            'email': current_user.email,
+            'tipoUsuario': current_user.tipoUsuario,
+            'mudaSenha': current_user.mudaSenha
+        }), 200
 
+    elif request.method == 'PUT':
+        data = request.get_json()
+        new_name = data.get('nome')
+        new_contact = data.get('contato')
+        new_photo = data.get('foto')
+
+        # Validação de entrada para o perfil
+        if new_name is not None and len(new_name.strip()) < 2:
+            return jsonify({'message': 'Nome completo deve ter no mínimo 2 caracteres.'}), 400
+        if new_contact is not None and not re.match(r"^\d{11}$", new_contact):
+            return jsonify({'message': 'Formato de contato inválido. Use 11 dígitos numéricos.'}), 400
+        # Adicionar validação para URL da foto se necessário (ex: começar com http/https)
+
+        if new_name is not None:
+            user_profile.nome = new_name
+        if new_contact is not None:
+            user_profile.contato = new_contact
+        if new_photo is not None: # Apenas atualiza se um valor for fornecido (mock URL)
+            user_profile.foto = new_photo
+        
         db.session.commit()
-        flash('Perfil atualizado com sucesso!', 'success')
-        return redirect(url_for('profile'))
+        return jsonify({'message': 'Perfil atualizado com sucesso'}), 200
 
-    return render_template('profile.html', user=current_user, profile=user_profile)
-
-@app.route('/change_password_on_login', methods=['GET', 'POST'])
+# Endpoint para Alterar Senha (chamado do Perfil ou Mudança Forçada)
+@app.route('/api/change_password', methods=['POST'])
 @login_required
-def change_password_on_login():
-    """
-    Rota para forçar a mudança de senha no próximo login.
-    """
-    if not current_user.mudaSenha:
-        return redirect(url_for('profile')) # Se não precisa mudar, redireciona
+def api_change_password():
+    data = request.get_json()
+    current_password = data.get('currentPassword') # Senha atual adicionada para validação
+    new_password = data.get('newPassword')
+    confirm_new_password = data.get('confirmNewPassword')
 
-    if request.method == 'POST':
-        new_password = request.form.get('new_password')
-        confirm_new_password = request.form.get('confirm_new_password')
+    # Validação de entrada: Todos os campos são obrigatórios
+    if not current_password or not new_password or not confirm_new_password:
+        return jsonify({'message': 'Ambos os campos de senha são obrigatórios.'}), 400
 
-        if new_password != confirm_new_password:
-            flash('As novas senhas não coincidem.', 'danger')
-            return redirect(url_for('change_password_on_login'))
+    # Validação: Verifica se a senha atual está correta
+    if not check_password_hash(current_user.senha, current_password):
+        return jsonify({'message': 'A senha atual está incorreta.'}), 401 # Unauthorized
 
-        if len(new_password) < 6:
-            flash('A nova senha deve ter pelo menos 6 caracteres.', 'danger')
-            return redirect(url_for('change_password_on_login'))
+    # Validação: Nova senha e confirmação devem ser iguais
+    if new_password != confirm_new_password:
+        return jsonify({'message': 'As novas senhas não coincidem.'}), 400
 
-        current_user.senha = generate_password_hash(new_password, method='pbkdf2:sha256')
-        current_user.mudaSenha = False # Desativa a flag após a mudança
-        db.session.commit()
-
-        flash('Sua senha foi atualizada com sucesso!', 'success')
-        return redirect(url_for('profile'))
-
-    return render_template('change_password_on_login.html')
-
-# --- Rotas para o CRUD de Projetos (Exemplo da Aplicação Principal) ---
-@app.route('/projects')
-@login_required
-def list_projects():
-    """
-    Lista todos os projetos (ou apenas os do usuário logado, dependendo da lógica).
-    """
-    projects = Project.query.all() # Ou Project.query.filter_by(user_id=current_user.id).all()
-    return render_template('projects.html', projects=projects)
-
-@app.route('/project/new', methods=['GET', 'POST'])
-@login_required
-def new_project():
-    """
-    Cria um novo projeto.
-    """
-    if request.method == 'POST':
-        title = request.form.get('title')
-        description = request.form.get('description')
-        status = request.form.get('status', 'Aberto') # Padrão 'Aberto'
-
-        new_proj = Project(
-            user_id=current_user.id,
-            title=title,
-            description=description,
-            status=status
-        )
-        db.session.add(new_proj)
-        db.session.commit()
-        flash('Projeto criado com sucesso!', 'success')
-        return redirect(url_for('list_projects'))
-    return render_template('create_project.html')
-
-@app.route('/project/<int:project_id>')
-@login_required
-def view_project(project_id):
-    """
-    Visualiza um projeto específico.
-    """
-    project = Project.query.get_or_404(project_id)
-    # Opcional: Adicionar verificação de permissão se apenas o criador puder ver
-    return render_template('view_project.html', project=project)
-
-@app.route('/project/<int:project_id>/edit', methods=['GET', 'POST'])
-@login_required
-def edit_project(project_id):
-    """
-    Edita um projeto existente.
-    Apenas o criador do projeto pode editar.
-    """
-    project = Project.query.get_or_404(project_id)
-    if project.user_id != current_user.id:
-        flash('Você não tem permissão para editar este projeto.', 'danger')
-        return redirect(url_for('list_projects'))
-
-    if request.method == 'POST':
-        project.title = request.form.get('title')
-        project.description = request.form.get('description')
-        project.status = request.form.get('status')
-        db.session.commit()
-        flash('Projeto atualizado com sucesso!', 'success')
-        return redirect(url_for('view_project', project_id=project.id))
-    return render_template('edit_project.html', project=project)
-
-@app.route('/project/<int:project_id>/delete', methods=['POST'])
-@login_required
-def delete_project(project_id):
-    """
-    Deleta um projeto.
-    Apenas o criador do projeto pode deletar.
-    """
-    project = Project.query.get_or_404(project_id)
-    if project.user_id != current_user.id:
-        flash('Você não tem permissão para deletar este projeto.', 'danger')
-        return redirect(url_for('list_projects'))
-
-    db.session.delete(project)
+    # Validação: Comprimento mínimo da nova senha
+    if len(new_password) < 6:
+        return jsonify({'message': 'A nova senha deve ter no mínimo 6 caracteres.'}), 400
+    
+    # Se todas as validações passarem, atualiza a senha
+    current_user.senha = generate_password_hash(new_password, method='pbkdf2:sha256')
+    current_user.mudaSenha = False # Desativa a flag após a mudança
     db.session.commit()
-    flash('Projeto deletado com sucesso!', 'success')
-    return redirect(url_for('list_projects'))
+
+    return jsonify({'message': 'Sua senha foi atualizada com sucesso!'}), 200
+
+# Endpoint para Solicitar Redefinição de Senha (Forgot Password)
+@app.route('/api/forgot_password', methods=['POST'])
+def api_forgot_password():
+    data = request.get_json()
+    email = data.get('email')
+
+    # Validação: E-mail não pode ser vazio e deve ter formato válido
+    if not email or not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return jsonify({'message': 'Por favor, insira um e-mail válido.'}), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        token = secrets.token_urlsafe(32)
+        user.reset_token = token
+        user.reset_expiration = datetime.utcnow() + timedelta(hours=1) # Token válido por 1 hora
+        db.session.commit()
+        
+        reset_link = url_for('index', _external=True) + f'#reset-password-{token}'
+        print(f"DEBUG: Link de redefinição para {user.email}: {reset_link}")
+        return jsonify({'message': f'Um link para redefinir a sua senha foi enviado para {user.email}. (Verifique a consola para o link de depuração)'}), 200
+    else:
+        # Mensagem genérica para segurança (não revela se o e-mail existe)
+        return jsonify({'message': 'Se o e-mail estiver registrado, um link de redefinição será enviado.'}), 200
+
+# Endpoint para Redefinir Senha com Token
+@app.route('/api/reset_password', methods=['POST'])
+def api_reset_password():
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('newPassword')
+    confirm_new_password = data.get('confirmNewPassword')
+
+    # Validação: Token, nova senha e confirmação são obrigatórios
+    if not token:
+        return jsonify({'message': 'Token de redefinição inválido.'}), 400
+    if not new_password or not confirm_new_password:
+        return jsonify({'message': 'Ambos os campos de senha são obrigatórios.'}), 400
+    
+    # Validação: Nova senha e confirmação devem ser iguais
+    if new_password != confirm_new_password:
+        return jsonify({'message': 'As novas senhas não coincidem.'}), 400
+    
+    # Validação: Comprimento mínimo da nova senha
+    if len(new_password) < 6:
+        return jsonify({'message': 'A nova senha deve ter no mínimo 6 caracteres.'}), 400
+
+    user = User.query.filter_by(reset_token=token).first()
+
+    # Validação: Token existe e não expirou
+    if not user or (user.reset_expiration and user.reset_expiration < datetime.utcnow()):
+        return jsonify({'message': 'O link de redefinição é inválido ou expirou.'}), 400
+
+    # Se todas as validações passarem, atualiza a senha
+    user.senha = generate_password_hash(new_password, method='pbkdf2:sha256')
+    user.reset_token = None
+    user.reset_expiration = None
+    user.mudaSenha = False
+    db.session.commit()
+
+    return jsonify({'message': 'A sua senha foi redefinida com sucesso!'}), 200
+
+# --- Endpoints CRUD para Projetos ---
+@app.route('/api/projects', methods=['GET', 'POST'])
+@login_required
+def api_projects():
+    if request.method == 'GET':
+        # Retorna apenas projetos do utilizador com sessão iniciada
+        projects = Project.query.filter_by(user_id=current_user.id).order_by(Project.created_at.desc()).all()
+        projects_data = [{
+            'id': p.id,
+            'name': p.name,
+            'description': p.description,
+            'status': p.status,
+            'createdAt': p.created_at.isoformat()
+        } for p in projects]
+        return jsonify(projects_data), 200
+
+    elif request.method == 'POST':
+        data = request.get_json()
+        name = data.get('name')
+        description = data.get('description')
+        status = data.get('status', 'A Fazer')
+
+        # Validação para POST (criação de projeto)
+        if not name or len(name.strip()) < 3:
+            return jsonify({'message': 'O nome do projeto é obrigatório e deve ter no mínimo 3 caracteres.'}), 400
+        # Descrição opcional, não precisa de validação de presença, mas pode ter de comprimento
+        if description and len(description.strip()) < 5:
+            return jsonify({'message': 'A descrição do projeto deve ter no mínimo 5 caracteres, se fornecida.'}), 400
+        if status not in ['A Fazer', 'Em Andamento', 'Concluído']: # Garante que o status é um dos valores permitidos
+            return jsonify({'message': 'Status de projeto inválido.'}), 400
 
 
-# --- Rotas para a REST API (Exemplo) ---
-# Usaremos jsonify para retornar respostas JSON
+        new_project = Project(user_id=current_user.id, name=name, description=description, status=status)
+        db.session.add(new_project)
+        db.session.commit()
 
-from flask import jsonify
+        return jsonify({'message': 'Projeto criado com sucesso!', 'project': {
+            'id': new_project.id,
+            'name': new_project.name,
+            'description': new_project.description,
+            'status': new_project.status,
+            'createdAt': new_project.created_at.isoformat()
+        }}), 201
 
-@app.route('/api/projects', methods=['GET'])
-def api_list_projects():
-    """
-    API: Retorna uma lista de todos os projetos em JSON.
-    """
-    projects = Project.query.all()
-    projects_data = []
-    for proj in projects:
-        projects_data.append({
-            'id': proj.id,
-            'user_id': proj.user_id,
-            'title': proj.title,
-            'description': proj.description,
-            'status': proj.status,
-            'created_at': proj.created_at.isoformat()
-        })
-    return jsonify(projects_data)
-
-@app.route('/api/project/<int:project_id>', methods=['GET'])
-def api_get_project(project_id):
-    """
-    API: Retorna detalhes de um projeto específico em JSON.
-    """
+@app.route('/api/projects/<int:project_id>', methods=['GET', 'PUT', 'DELETE'])
+@login_required
+def api_single_project(project_id):
     project = Project.query.get(project_id)
+
     if not project:
         return jsonify({'message': 'Projeto não encontrado'}), 404
-    project_data = {
-        'id': project.id,
-        'user_id': project.user_id,
-        'title': project.title,
-        'description': project.description,
-        'status': project.status,
-        'created_at': project.created_at.isoformat()
-    }
-    return jsonify(project_data)
 
-# Nota: Para API de criação/edição/deleção, você precisaria de autenticação de API (ex: tokens JWT)
-# e validação de dados, que são mais avançados. Este é um exemplo básico.
+    # Garante que o utilizador com sessão iniciada é o proprietário do projeto
+    if project.user_id != current_user.id:
+        return jsonify({'message': 'Não autorizado a aceder a este projeto.'}), 403
 
+    if request.method == 'GET':
+        return jsonify({
+            'id': project.id,
+            'name': project.name,
+            'description': project.description,
+            'status': project.status,
+            'createdAt': project.created_at.isoformat()
+        }), 200
 
-# --- Inicialização do Banco de Dados ---
-# Este bloco deve ser executado APENAS UMA VEZ para criar as tabelas.
-# Em um ambiente de produção, você usaria ferramentas de migração (ex: Flask-Migrate).
-# REMOVIDO: @app.before_first_request
-# A criação das tabelas e o usuário admin agora estão apenas no bloco if __name__ == '__main__':
+    elif request.method == 'PUT':
+        data = request.get_json()
+        new_name = data.get('name')
+        new_description = data.get('description')
+        new_status = data.get('status')
+
+        # Validação para PUT (atualização de projeto)
+        if new_name is not None and len(new_name.strip()) < 3:
+            return jsonify({'message': 'O nome do projeto é obrigatório e deve ter no mínimo 3 caracteres.'}), 400
+        if new_description is not None and len(new_description.strip()) < 5:
+            return jsonify({'message': 'A descrição do projeto deve ter no mínimo 5 caracteres, se fornecida.'}), 400
+        if new_status is not None and new_status not in ['A Fazer', 'Em Andamento', 'Concluído']:
+            return jsonify({'message': 'Status de projeto inválido.'}), 400
+
+        if new_name is not None:
+            project.name = new_name
+        if new_description is not None:
+            project.description = new_description
+        if new_status is not None:
+            project.status = new_status
+        
+        db.session.commit()
+        return jsonify({'message': 'Projeto atualizado com sucesso!'}), 200
+
+    elif request.method == 'DELETE':
+        db.session.delete(project)
+        db.session.commit()
+        return jsonify({'message': 'Projeto excluído com sucesso!'}), 200
 
 # Bloco para rodar a aplicação
 if __name__ == '__main__':
-    # Cria as tabelas do banco de dados antes de rodar o app
-    # Isso é feito aqui para simplicidade, mas em produção, use `flask db upgrade`
     with app.app_context():
-        db.create_all()
-        # Exemplo: Criar um usuário admin padrão se não existir
-        if not User.query.filter_by(email='admin@freelahub.com').first():
+        db.create_all() # Cria as tabelas no banco de dados
+        # Cria utilizador administrador padrão se não existir
+        if not User.query.filter_by(email='admin@exemplo.com').first():
             admin_user = User(
-                email='admin@freelahub.com',
-                senha=generate_password_hash('admin123', method='pbkdf2:sha256'),
+                email='admin@exemplo.com',
+                senha=generate_password_hash('123456', method='pbkdf2:sha256'),
                 tipoUsuario=True, # Admin
                 liberacao=True
             )
             db.session.add(admin_user)
             db.session.commit()
-            admin_profile = Profile(userID=admin_user.id, nome='Administrador FreelaHub', contato='99999999999')
+            admin_profile = Profile(userID=admin_user.id, nome='Administrador Exemplo', contato='11999999999')
             db.session.add(admin_profile)
             db.session.commit()
-            print("Usuário admin padrão criado: admin@freelahub.com / admin123")
+            print("Utilizador administrador padrão criado: admin@exemplo.com / 123456")
+
+        # Mock de projetos para o utilizador administrador (apenas se o banco estiver vazio)
+        if User.query.filter_by(email='admin@exemplo.com').first() and not Project.query.filter_by(user_id=1).first():
+            mock_projects = [
+                Project(user_id=1, name='Desenvolvimento do Backend', description='Criar a API REST com Flask e SQLite.', status='Em Andamento'),
+                Project(user_id=1, name='Criação do Frontend SPA', description='Desenvolver a interface com HTML, CSS e JS.', status='Concluído'),
+                Project(user_id=1, name='Testes e Implementação', description='Realizar testes unitários e de integração.', status='A Fazer'),
+            ]
+            for proj in mock_projects:
+                db.session.add(proj)
+            db.session.commit()
+            print("Projetos mock para administrador criados.")
 
     app.run(debug=True)
