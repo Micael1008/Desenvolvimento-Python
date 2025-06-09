@@ -12,15 +12,15 @@ import re # Importar módulo de expressões regulares para validação de email 
 
 # Configurações do Flask
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_segura_e_longa_aqui' # Mude isso em produção!
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gestorprojetos.db' # Nome do banco de dados alterado
+app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_segura_e_longa_aqui' 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gestorprojetos.db' 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'index' # Redireciona para a página inicial da SPA se não logado para API
+login_manager.login_view = 'index' 
 
 # --- Modelos do Banco de Dados ---
 class User(db.Model, UserMixin):
@@ -87,6 +87,7 @@ def api_login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    # remember = data.get('remember', False) # Removido para desativar a persistência por padrão
 
     # Validação de entrada: E-mail e senha não podem ser vazios, e formato de e-mail válido
     if not email or not password:
@@ -104,12 +105,12 @@ def api_login():
     if not user.liberacao:
         return jsonify({'message': 'Sua conta está inativa. Entre em contato com o suporte.'}), 403
 
-    login_user(user) # Faz o login do utilizador via Flask-Login
+    # Faz o login do utilizador. 'remember=False' significa que a sessão termina ao fechar o navegador.
+    login_user(user, remember=False)
     
     # Obter o nome do utilizador do perfil, com um fallback seguro
     user_name = user.profile.nome if user.profile and user.profile.nome else user.email.split('@')[0] if user.email else 'Utilizador'
 
-    # Se a senha precisa ser alterada, o frontend será notificado
     if user.mudaSenha:
         return jsonify({
             'message': 'Login bem-sucedido. Sua senha precisa ser alterada.',
@@ -158,7 +159,7 @@ def api_signup():
     db.session.add(new_profile)
     db.session.commit()
 
-    login_user(new_user) # Opcional: logar o utilizador automaticamente após o registo
+    login_user(new_user, remember=False) # Também desativado o "remember me" no registo
 
     return jsonify({
         'message': 'Conta criada com sucesso!',
@@ -450,7 +451,7 @@ if __name__ == '__main__':
             db.session.commit()
             print("Utilizador administrador padrão criado: admin@exemplo.com / 123456")
 
-        # Mock de projetos para o utilizador administrador (apenas se o banco estiver vazio)
+        
         if User.query.filter_by(email='admin@exemplo.com').first() and not Project.query.filter_by(user_id=1).first():
             mock_projects = [
                 Project(user_id=1, name='Desenvolvimento do Backend', description='Criar a API REST com Flask e SQLite.', status='Em Andamento'),
