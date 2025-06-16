@@ -1,5 +1,4 @@
 # app.py
-# Backend REST API para o Gestor de Projetos (SPA Frontend)
 
 from flask import Flask, request, jsonify, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -25,15 +24,10 @@ login_manager.login_view = 'index'
 # --- Modelos do Banco de Dados ---
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    # email varchar(50)
     email = db.Column(db.String(50), unique=True, nullable=False)
-    # senha varchar(30) (usaremos varchar(255) para o hash)
     senha = db.Column(db.String(255), nullable=False)
-    # tipoUsuario booleano user 0 / 1 admin
-    tipoUsuario = db.Column(db.Boolean, default=False) # False=user, True=admin
-    # mudaSenha booleano nao mudar 0 / 1 mudar
+    tipoUsuario = db.Column(db.Boolean, default=False) 
     mudaSenha = db.Column(db.Boolean, default=False)
-    # liberacao booleano inativo 0 / 1 ativo
     liberacao = db.Column(db.Boolean, default=True)
 
     reset_token = db.Column(db.String(100), unique=True, nullable=True)
@@ -48,11 +42,8 @@ class User(db.Model, UserMixin):
 class Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     userID = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    # nome varchar(50) nome completo
     nome = db.Column(db.String(50), nullable=True)
-    # contato varchar(11) Area 2 digitos, telefone 9 digitos
-    contato = db.Column(db.String(11), nullable=True) # <-- Coluna definida como 'contato'
-    # foto varchar() caminho para imagem salva no dispositivo (usaremos o nome do arquivo)
+    contato = db.Column(db.String(11), nullable=True) 
     foto = db.Column(db.String(255), nullable=True, default='default.jpg')
 
     def __repr__(self):
@@ -61,10 +52,10 @@ class Profile(db.Model):
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    name = db.Column(db.String(100), nullable=False) # Renomeado 'title' para 'name' para consistência com o frontend JS
-    description = db.Column(db.Text, nullable=True) # Alterado para True para permitir vazio
-    status = db.Column(db.String(20), default='A Fazer', nullable=False) # Status padrão 'A Fazer'
-    created_at = db.Column(db.DateTime, default=datetime.utcnow) # Ajustado para datetime.utcnow
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True) 
+    status = db.Column(db.String(20), default='A Fazer', nullable=False) 
+    created_at = db.Column(db.DateTime, default=datetime.utcnow) 
 
     def __repr__(self):
         return f"<Project {self.name}>"
@@ -120,7 +111,7 @@ def api_login():
 
     return jsonify({
         'message': 'Login bem-sucedido',
-        'user': {'id': user.id, 'email': user.email, 'nome': user_name}, # Retorna dados básicos do utilizador
+        'user': {'id': user.id, 'email': user.email, 'nome': user_name}, 
         'isAuthenticated': True
     }), 200
 
@@ -141,7 +132,7 @@ def api_signup():
         return jsonify({'message': 'Formato de e-mail inválido.'}), 400
     if not password or len(password) < 6:
         return jsonify({'message': 'A senha é obrigatória e deve ter no mínimo 6 caracteres.'}), 400
-    # Validação de complexidade de senha (exemplo, pode ser expandido com mais regras)
+    # Validação de complexidade de senha 
     # if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$", password):
     #     return jsonify({'message': 'Senha deve ter no mínimo 6 caracteres, com letra maiúscula, minúscula, número e caractere especial.'}), 400
 
@@ -159,13 +150,13 @@ def api_signup():
     db.session.add(new_profile)
     db.session.commit()
 
-    login_user(new_user, remember=False) # Também desativado o "remember me" no registo
+    login_user(new_user, remember=False) 
 
     return jsonify({
         'message': 'Conta criada com sucesso!',
         'user': {'id': new_user.id, 'email': new_user.email, 'nome': new_profile.nome},
         'isAuthenticated': True
-    }), 201 # Created
+    }), 201 
 
 # Endpoint para verificar o estado de autenticação (usado na inicialização do SPA)
 @app.route('/api/auth_status', methods=['GET'])
@@ -198,7 +189,7 @@ def api_logout():
     logout_user()
     return jsonify({'message': 'Logout bem-sucedido'}), 200
 
-# Endpoint para Perfil do Utilizador (GET e PUT para atualização)
+# Endpoint para Perfil do Utilizador 
 @app.route('/api/profile', methods=['GET', 'PUT'])
 @login_required
 def api_profile():
@@ -232,7 +223,7 @@ def api_profile():
             return jsonify({'message': 'Nome completo deve ter no mínimo 2 caracteres.'}), 400
         if new_contact is not None and not re.match(r"^\d{11}$", new_contact):
             return jsonify({'message': 'Formato de contato inválido. Use 11 dígitos numéricos.'}), 400
-        # Adicionar validação para URL da foto se necessário (ex: começar com http/https)
+        
 
         if new_name is not None:
             user_profile.nome = new_name
@@ -244,7 +235,7 @@ def api_profile():
         db.session.commit()
         return jsonify({'message': 'Perfil atualizado com sucesso'}), 200
 
-# Endpoint para Alterar Senha (chamado do Perfil ou Mudança Forçada)
+# Endpoint para Alterar Senha 
 @app.route('/api/change_password', methods=['POST'])
 @login_required
 def api_change_password():
@@ -298,7 +289,7 @@ def api_forgot_password():
         print(f"DEBUG: Link de redefinição para {user.email}: {reset_link}")
         return jsonify({'message': f'Um link para redefinir a sua senha foi enviado para {user.email}. (Verifique a consola para o link de depuração)'}), 200
     else:
-        # Mensagem genérica para segurança (não revela se o e-mail existe)
+        # Mensagem genérica para segurança 
         return jsonify({'message': 'Se o e-mail estiver registrado, um link de redefinição será enviado.'}), 200
 
 # Endpoint para Redefinir Senha com Token
