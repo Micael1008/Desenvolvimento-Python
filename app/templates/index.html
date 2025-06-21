@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Projetos - Projeto RAD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="bg-slate-900 text-slate-300 transition-colors duration-300">
+
+    <header class="bg-slate-800/80 backdrop-blur-lg shadow-sm shadow-black/20 sticky top-0 z-30">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="#" id="logo" class="text-2xl font-bold text-indigo-400">GestorPro</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="nav-links" class="hidden md:block"></div>
+                    <button id="theme-toggle-btn" class="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition">
+                        <svg id="theme-toggle-dark-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                        <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm-1.414 8.486a1 1 0 011.414 0l.707.707a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 010-1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="flash-messages" class="mb-4"></div>
+        <section id="landing-view" class="view active">
+            <div class="text-center py-16">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-white">Organize os seus projetos com <span class="text-indigo-400">facilidade</span>.</h1>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-400">Uma ferramenta simples e poderosa para gerir as suas tarefas, acompanhar o progresso e colaborar com a sua equipa.</p>
+                <div class="mt-8 flex justify-center gap-4">
+                    <button data-target="login-view" class="nav-button bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700 transition">Entrar</button>
+                    <button data-target="signup-view" class="nav-button bg-slate-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-slate-600 transition">Criar Conta</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="login-view" class="view">
+            <div class="max-w-md mx-auto bg-slate-800 p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-center mb-6 text-white">Acesso</h2>
+                <form id="login-form">
+                    <div class="mb-4"><label for="login-email" class="block text-sm font-medium text-slate-300 mb-1">Email</label><input type="email" id="login-email" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <div class="mb-6"><label for="login-password" class="block text-sm font-medium text-slate-300 mb-1">Senha</label><input type="password" id="login-password" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition">Entrar</button>
+                </form>
+                <p class="text-center text-sm text-slate-400 mt-6">Não tem uma conta? <button data-target="signup-view" class="nav-button font-semibold text-indigo-400 hover:underline">Registe-se</button></p>
+                <p class="text-center text-sm text-slate-400 mt-2"><button data-target="forgot-password-view" class="nav-button font-semibold text-indigo-400 hover:underline">Esqueceu a senha?</button></p>
+            </div>
+        </section>
+
+        <section id="signup-view" class="view">
+            <div class="max-w-md mx-auto bg-slate-800 p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-center mb-6 text-white">Criar Nova Conta</h2>
+                <form id="signup-form">
+                    <div class="mb-4"><label for="signup-name" class="block text-sm font-medium text-slate-300 mb-1">Nome Completo</label><input type="text" id="signup-name" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <div class="mb-4"><label for="signup-email" class="block text-sm font-medium text-slate-300 mb-1">Email</label><input type="email" id="signup-email" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <div class="mb-4"><label for="signup-password" class="block text-sm font-medium text-slate-300 mb-1">Senha</label><input type="password" id="signup-password" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <div class="mb-6"><label for="signup-confirm-password" class="block text-sm font-medium text-slate-300 mb-1">Confirmar Senha</label><input type="password" id="signup-confirm-password" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition">Criar Conta</button>
+                </form>
+                <p class="text-center text-sm text-slate-400 mt-6">Já possui uma conta? <button data-target="login-view" class="nav-button font-semibold text-indigo-400 hover:underline">Faça acesso</button></p>
+            </div>
+        </section>
+
+        <section id="dashboard-view" class="view">
+            <h1 class="text-3xl font-bold mb-6 text-white" id="welcome-message"></h1>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 space-y-8">
+                    <div class="bg-slate-800 p-6 rounded-xl shadow-lg"><h2 class="text-xl font-bold mb-4 text-white">Perfil do Utilizador</h2><div id="profile-details" class="space-y-3 text-slate-400"></div><button id="edit-profile-btn" class="mt-4 bg-slate-700 text-slate-300 font-semibold py-2 px-4 rounded-lg hover:bg-slate-600 transition">Editar Perfil</button></div>
+                    <div class="bg-slate-800 p-6 rounded-xl shadow-lg"><h2 class="text-xl font-bold mb-4 text-white">Estado dos Projetos</h2><div class="chart-container"><canvas id="project-status-chart"></canvas></div></div>
+                </div>
+                <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl shadow-lg">
+                    <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold text-white">Os meus Projetos</h2><button id="add-project-btn" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition">Novo Projeto</button></div>
+                    <p class="text-slate-400 mb-6">Esta é a sua aplicação principal. Aqui pode criar, visualizar, editar e remover projetos, demonstrando um ciclo CRUD completo.</p>
+                    <div id="project-list" class="space-y-4"></div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="forgot-password-view" class="view">
+            <div class="max-w-md mx-auto bg-slate-800 p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-center mb-6 text-white">Esqueceu a Senha?</h2>
+                <form id="forgot-password-form">
+                    <div class="mb-4"><label for="forgot-email" class="block text-sm font-medium text-slate-300 mb-1">Email</label><input type="email" id="forgot-email" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition">Enviar Link</button>
+                </form>
+                <p class="text-center text-sm text-slate-400 mt-6">Lembrou-se? <button data-target="login-view" class="nav-button font-semibold text-indigo-400 hover:underline">Faça acesso</button></p>
+            </div>
+        </section>
+
+        <section id="reset-password-view" class="view">
+            <div class="max-w-md mx-auto bg-slate-800 p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-center mb-6 text-white">Redefinir Senha</h2>
+                <form id="reset-password-form">
+                    <input type="hidden" id="reset-token">
+                    <div class="mb-4"><label for="reset-password" class="block text-sm font-medium text-slate-300 mb-1">Nova Senha</label><input type="password" id="reset-password" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <div class="mb-6"><label for="reset-confirm-password" class="block text-sm font-medium text-slate-300 mb-1">Confirmar Nova Senha</label><input type="password" id="reset-confirm-password" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition">Redefinir Senha</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="change-password-view" class="view">
+            <div class="max-w-md mx-auto bg-slate-800 p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-center mb-6 text-white">Alterar Senha</h2>
+                <form id="forced-change-password-form">
+                    <div class="mb-4"><label for="forced-current-password" class="block text-sm font-medium text-slate-300 mb-1">Senha Atual</label><input type="password" id="forced-current-password" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <div class="mb-4"><label for="forced-new-password" class="block text-sm font-medium text-slate-300 mb-1">Nova Senha</label><input type="password" id="forced-new-password" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <div class="mb-6"><label for="forced-confirm-new-password" class="block text-sm font-medium text-slate-300 mb-1">Confirmar Nova Senha</label><input type="password" id="forced-confirm-new-password" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition">Alterar Senha</button>
+                </form>
+            </div>
+        </section>
+    </main>
+    
+    <div id="modal-backdrop" class="modal-backdrop"></div>
+    <div id="project-modal" class="modal w-full max-w-lg bg-slate-800 p-8 rounded-xl shadow-2xl">
+        <h2 id="modal-title" class="text-2xl font-bold mb-6 text-white"></h2>
+        <form id="project-form">
+            <input type="hidden" id="project-id">
+            <div class="mb-4"><label for="project-name" class="block text-sm font-medium text-slate-300 mb-1">Nome do Projeto</label><input type="text" id="project-name" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg" required></div>
+            <div class="mb-4"><label for="project-description" class="block text-sm font-medium text-slate-300 mb-1">Descrição</label><textarea id="project-description" rows="3" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg"></textarea></div>
+            <div class="mb-6"><label for="project-status" class="block text-sm font-medium text-slate-300 mb-1">Estado</label><select id="project-status" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg"><option value="A Fazer">A Fazer</option><option value="Em Andamento">Em Andamento</option><option value="Concluído">Concluído</option></select></div>
+            <div class="flex justify-end gap-4"><button type="button" id="cancel-project-btn" class="bg-slate-600 text-slate-300 font-semibold py-2 px-4 rounded-lg hover:bg-slate-500 transition">Cancelar</button><button type="submit" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition">Salvar</button></div>
+        </form>
+    </div>
+
+    <div id="profile-modal" class="modal w-full max-w-lg bg-slate-800 p-8 rounded-xl shadow-2xl">
+        <h2 class="text-2xl font-bold mb-6 text-white">Editar Perfil</h2>
+        <form id="profile-edit-form">
+            <div class="mb-4"><label for="profile-name" class="block text-sm font-medium text-slate-300 mb-1">Nome Completo</label><input type="text" id="profile-name" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg"></div>
+            <div class="mb-4"><label for="profile-contact" class="block text-sm font-medium text-slate-300 mb-1">Contato (11 dígitos)</label><input type="text" id="profile-contact" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg"></div>
+            <div class="mb-6"><label for="profile-photo" class="block text-sm font-medium text-slate-300 mb-1">URL da Foto de Perfil</label><input type="text" id="profile-photo" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg" placeholder="Ex: https://example.com/minhafoto.jpg"></div>
+            <div class="flex justify-end gap-4"><button type="button" id="cancel-profile-btn" class="bg-slate-600 text-slate-300 font-semibold py-2 px-4 rounded-lg hover:bg-slate-500 transition">Cancelar</button><button type="submit" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition">Salvar</button></div>
+        </form>
+        <h3 class="text-xl font-bold mt-8 mb-4 text-white">Alterar Senha</h3>
+        <form id="change-password-form">
+            <div class="mb-4"><label for="current-password" class="block text-sm font-medium text-slate-300 mb-1">Senha Atual</label><input type="password" id="current-password" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg" required></div>
+            <div class="mb-4"><label for="new-password" class="block text-sm font-medium text-slate-300 mb-1">Nova Senha</label><input type="password" id="new-password" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+            <div class="mb-6"><label for="confirm-new-password" class="block text-sm font-medium text-slate-300 mb-1">Confirmar Nova Senha</label><input type="password" id="confirm-new-password" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 rounded-lg" required></div>
+            <div class="flex justify-end"><button type="submit" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition">Atualizar Senha</button></div>
+        </form>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
